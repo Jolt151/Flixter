@@ -5,7 +5,10 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import com.example.android.flixter.api.MovieService
+import com.example.android.flixter.db.MovieDatabase
 import com.example.android.flixter.model.Movie
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -40,10 +43,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .build()
     private val api = retrofit.create(MovieService::class.java)
 
+    private val movieDao = Room.databaseBuilder(application, MovieDatabase::class.java, "movies").build().movieDao()
+
     init {
         viewModelScope.launch {
+            movies.value = movieDao.getAll()
             val newMovies = api.getMovies().results
             movies.value = newMovies
+            movieDao.insertAll(newMovies)
             Log.i(this@MainViewModel.javaClass.name, movies.toString())
         }
     }
